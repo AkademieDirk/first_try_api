@@ -13,8 +13,12 @@ class MainApp extends StatelessWidget {
       home: Scaffold(
         body: Center(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text('Hello World!'),
+              SizedBox(
+                height: 50,
+              ),
               ElevatedButton(onPressed: () {}, child: const Text("Drück mich"))
             ],
           ),
