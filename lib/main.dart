@@ -18,17 +18,20 @@ Future<List<dynamic>> getTask() async {
   if (response.statusCode == 200) {
     final String data =
         response.body; // den Body aus der Response in die Variable data
-
 //! warum String? muss der Key immer String sein?
     final Map<String, dynamic> decodedJson = jsonDecode(
       data,
     ); // in die Map decodedJson packen wir die Daten von vorher aus dem Body aber decodiert
 
     final tasks = decodedJson["todos"];
+    if (tasks == null) {
+      return [];
+    }
+
     return tasks;
   }
 // leere Liste bei Fehler noch ändern
-  return [];
+  return throw Exception("Fehler: Serverantwort war nicht 200 OK.");
 }
 
 class MainApp extends StatefulWidget {
@@ -47,7 +50,7 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    getFirstTask;
+    getFirstTask();
   }
 // Hier eerstelle cih die Methode zum holen der ersten Aufgabe
 
@@ -70,23 +73,41 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       home: Scaffold(
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text("Aufgabe $taskId"),
-              Text(taskContents),
-              completed
-                  ? const Text("Aufgabe erledigt")
-                  : const Text("Aufgabe noch offen"),
-              const SizedBox(
-                height: 50,
-              ),
-              ElevatedButton(
-                  onPressed: () {
-                    getFirstTask();
-                  },
-                  child: const Text("Drück mich"))
-            ],
+          child: FutureBuilder(
+            future: getTask(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              }
+
+              if (snapshot.hasError) {
+                return Text(
+                  "Fehler : ${snapshot.error}",
+                  style: const TextStyle(color: Colors.red),
+                );
+              }
+              if (snapshot.hasData) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Aufgabe $taskId"),
+                    Text(taskContents),
+                    completed
+                        ? const Text("Aufgabe erledigt")
+                        : const Text("Aufgabe noch offen"),
+                    const SizedBox(
+                      height: 50,
+                    ),
+                    ElevatedButton(
+                        onPressed: () {
+                          getFirstTask();
+                        },
+                        child: const Text("Drück mich"))
+                  ],
+                );
+              }
+              return const Text("Keine Daten");
+            },
           ),
         ),
       ),
